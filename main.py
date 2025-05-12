@@ -1,0 +1,75 @@
+import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
+
+cap = cv2.VideoCapture('video.mp4')
+fgbg = cv2.createBackgroundSubtractorMOG2()
+
+T = []
+Y = []
+
+while cap.isOpened():
+    ret, frame = cap.read()
+    if not ret:
+        break
+
+    time_sec = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000.0
+
+    fgmask = fgbg.apply(frame)
+    contours, _ = cv2.findContours(fgmask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    for contour in contours:
+        if cv2.contourArea(contour) > 500: 
+            x, y, w, h = cv2.boundingRect(contour)
+            cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+            object_position = y
+            time_sec = time_sec
+            T.append(time_sec)
+            Y.append(object_position)
+
+    cv2.imshow('Frame', frame)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
+cap.release()
+cv2.destroyAllWindows()
+print(T)
+print(Y)
+
+t_data = np.array(T)
+
+y_data = np.array(Y)
+
+def true_free_fall_eq(t):
+    return 0.5 * 9.81 * t ** 2 + 0 * t + 0
+
+def free_fall_eq(t, g, v0, y0):
+    return 0.5 * g * t**2 + v0 * t + y0
+
+params, covariance = curve_fit(free_fall_eq, t_data, y_data)
+
+g_estimated, v0_estimated, y0_estimated = params
+
+print(f"g: {g_estimated:.2f} m/s²")
+print(f"v0: {v0_estimated:.2f} m/s")
+print(f"y0: {y0_estimated:.2f} m")
+
+t_fit = np.linspace(0, 3, 100) 
+y_fit = free_fall_eq(t_fit, *params) 
+
+plt.scatter(t_data, y_data, label='data', color='blue')
+plt.plot(t_fit, y_fit, label='fitting curve', color='red')
+try:
+    x = np.linspace(0, 3, 100)
+    y = true_free_fall_eq(x)
+    plt.plot(x, y, label='true curve', color='green')
+except:
+    print("Error in plotting true curve")
+plt.title("Freefalling motion")
+plt.xlabel("t")
+plt.ylabel("s")
+plt.legend()
+plt.grid(True)
+plt.show()
