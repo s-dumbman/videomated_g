@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
 
-cap = cv2.VideoCapture('att.mp4')
+cap = cv2.VideoCapture('popo.mp4')
 fgbg = cv2.createBackgroundSubtractorMOG2()
 
 T = []
@@ -14,7 +14,7 @@ while cap.isOpened():
     if not ret:
         break
     
-    frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
+    # frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
 
     time_sec = cap.get(cv2.CAP_PROP_POS_MSEC) / 1000.0
 
@@ -26,8 +26,9 @@ while cap.isOpened():
     if cv2.contourArea(largest_contour) > 500:
         x, y, w, h = cv2.boundingRect(largest_contour)
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-        object_position = y/1500 # ratio consumption
+        object_position = y*1.796/1080
         T.append(time_sec)
         Y.append(object_position)
 
@@ -42,13 +43,14 @@ cv2.destroyAllWindows()
 print(T)
 print(Y)
 valueT = max(T)
+print(height)
 
 t_data = np.array(T)
 
 y_data = np.array(Y)
 
 def true_free_fall_eq(t):
-    return 0.5 * 9.81 * t ** 2 + 0 * t + 0
+    return 0.5 * 9.81 * t ** 2 + v0_estimated * t + y0_estimated
 
 def free_fall_eq(t, g, v0, y0):
     return 0.5 * g * t**2 + v0 * t + y0
