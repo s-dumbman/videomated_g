@@ -28,7 +28,7 @@ while cap.isOpened():
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-        object_position = y*1.796/1080
+        object_position = y*1.796/height #popo.mp4속 배경은 1.796m임
         T.append(time_sec)
         Y.append(object_position)
 
